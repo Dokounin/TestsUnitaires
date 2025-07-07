@@ -41,17 +41,21 @@ export async function patchAccountInRepository(accountId, newAmount) {
 
 
 export async function getAccountsFromRepositoryByIds(ids) {
-  // Si ids est un seul nombre ou une string, on le transforme en tableau
-  const array = Array.isArray(ids) ? ids : [ids]
+  const array = Array.isArray(ids) ? ids : [ids];
 
-  // Conversion explicite en entiers
-  const parsedIds = array.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id))
+  const parsedIds = array
+    .map((id) => parseInt(id, 10))
+    .filter((id) => Number.isInteger(id));
 
-  // Important : 'int4' est correct pour PostgreSQL si 'id' est bien un INTEGER
+  if (parsedIds.length === 0) {
+    throw new Error("Aucun ID valide fourni");
+  }
+
   const accounts = await sql`
     SELECT * FROM accounts
-    WHERE id = ANY(${sql.array(parsedIds, 'int4')})
-  `
+    WHERE id = ANY(${parsedIds})
+  `;
 
-  return accounts
+  return accounts;
 }
+
